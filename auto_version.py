@@ -4,7 +4,10 @@ import os
 import sys
 import argparse
 import subprocess
+import re
 from xml.dom.minidom import parse
+
+ATTR_VERSION_NAME="android:versionName"
 
 def parse_manifest(manifest_path):
     try:
@@ -15,7 +18,14 @@ def parse_manifest(manifest_path):
 
     is_git = is_git_repo(manifest_path)
     version = auto_version(is_git)
-    dom1.documentElement.setAttribute("android:versionName", version)
+    original = dom1.documentElement.getAttribute(ATTR_VERSION_NAME)
+    if not original:
+        original = "0.1"
+    
+    original = re.sub("\(.*\)","", original)
+
+    version_name = "%s(#%s)" % (original, version)
+    dom1.documentElement.setAttribute(ATTR_VERSION_NAME, version_name)
     f = open(manifest_path, "w+")
     f.write(dom1.toxml() )
 
